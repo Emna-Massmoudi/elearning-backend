@@ -74,7 +74,9 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:4200",
-                "http://localhost:4203"
+                "http://localhost:4203",
+                "https://*.railway.app",    
+                "https://*.up.railway.app"
         ));
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"

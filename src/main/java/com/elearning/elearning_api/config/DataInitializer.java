@@ -18,9 +18,7 @@ public class DataInitializer {
                            JdbcTemplate jdbcTemplate) {
 
         return args -> {
-            jdbcTemplate.execute("ALTER TABLE cours MODIFY image_url LONGTEXT");
-            jdbcTemplate.execute("ALTER TABLE cours MODIFY video_url LONGTEXT");
-            jdbcTemplate.execute("ALTER TABLE cours MODIFY pdf_url LONGTEXT");
+            
 
             if (utilisateurRepository.findByEmail("admin@gmail.com").isEmpty()) {
 

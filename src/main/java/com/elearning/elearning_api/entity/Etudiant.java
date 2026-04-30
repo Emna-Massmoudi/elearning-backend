@@ -6,10 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "etudiants")
+@DiscriminatorValue("ETUDIANT")  
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
 public class Etudiant extends Utilisateur {
-
 }

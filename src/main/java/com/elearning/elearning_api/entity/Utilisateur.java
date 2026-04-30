@@ -8,29 +8,23 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "utilisateurs")
-@Inheritance(strategy = InheritanceType.JOINED)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)  // ← CHANGEMENT
+@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Utilisateur {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String nom;
-
     @Column(unique = true, nullable = false)
     private String email;
-
     @Column(nullable = false)
     private String motDePasse;
-
     private String status;
-
     @Enumerated(EnumType.STRING)
     private Role role;
-
     private LocalDateTime dateCreation;
 
     @PrePersist

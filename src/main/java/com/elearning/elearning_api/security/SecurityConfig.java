@@ -76,7 +76,9 @@ public class SecurityConfig {
                 "http://localhost:4200",
                 "http://localhost:4203",
                 "https://*.railway.app",    
-                "https://*.up.railway.app"
+                "https://*.up.railway.app",
+                "https://*.web.app",          
+                 "https://*.firebaseapp.com" 
         ));
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"

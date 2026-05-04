@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: elearning-backend
-    runtime: docker
-    buildCommand: "./mvnw clean package"
-    startCommand: "java -jar target/*.jar"

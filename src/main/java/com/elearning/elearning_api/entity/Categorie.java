@@ -1,13 +1,15 @@
 package com.elearning.elearning_api.entity;
 
-import com.elearning.elearning_api.entity.SousCategorie;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "categories")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Categorie {
@@ -21,6 +23,21 @@ public class Categorie {
 
     private String description;
 
-    @OneToMany(mappedBy = "categorie", cascade = CascadeType.ALL)
-    private List<SousCategorie> sousCategories;
+    @OneToMany(
+            mappedBy = "categorie",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<SousCategorie> sousCategories = new ArrayList<>();
+
+    // ✅ Méthode propre pour gérer la relation
+    public void addSousCategorie(SousCategorie sc) {
+        sousCategories.add(sc);
+        sc.setCategorie(this);
+    }
+
+    public void removeSousCategorie(SousCategorie sc) {
+        sousCategories.remove(sc);
+        sc.setCategorie(null);
+    }
 }

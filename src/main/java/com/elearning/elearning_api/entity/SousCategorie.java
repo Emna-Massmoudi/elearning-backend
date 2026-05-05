@@ -1,12 +1,15 @@
 package com.elearning.elearning_api.entity;
-import com.elearning.elearning_api.entity.Categorie;
+
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "sous_categories")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SousCategorie {
@@ -20,10 +23,10 @@ public class SousCategorie {
 
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id", nullable = false)
     private Categorie categorie;
 
     @OneToMany(mappedBy = "sousCategorie", cascade = CascadeType.ALL)
-    private List<Cours> cours;
+    private List<Cours> cours = new ArrayList<>();
 }

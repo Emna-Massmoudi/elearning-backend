@@ -9,6 +9,7 @@ import com.elearning.elearning_api.repository.CategorieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import com.elearning.elearning_api.entity.SousCategorie;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +18,23 @@ public class CategorieService {
     private final CategorieRepository categorieRepository;
 
     public CategorieResponse create(CategorieRequest request) {
+
         if (categorieRepository.existsByNom(request.getNom()))
             throw new AlreadyExistsException("Categorie already exists: " + request.getNom());
 
         Categorie categorie = new Categorie();
         categorie.setNom(request.getNom());
         categorie.setDescription(request.getDescription());
+
+        // 🔥 UTILISER addSousCategorie
+        if (request.getSousCategories() != null) {
+            for (String nomSousCat : request.getSousCategories()) {
+                SousCategorie sc = new SousCategorie();
+                sc.setNom(nomSousCat);
+
+                categorie.addSousCategorie(sc); 
+            }
+        }
 
         return toResponse(categorieRepository.save(categorie));
     }

@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
-
 @Entity
 @Table(name = "cours")
 @Data
@@ -29,18 +28,20 @@ public class Cours {
 
     private LocalDateTime dateCreation;
     private LocalDateTime datePublication;
-    
-    @Column(columnDefinition = "LONGTEXT")
+
+    // ✅ TEXT au lieu de LONGTEXT (compatible PostgreSQL)
+    @Column(columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String videoUrl;
 
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "TEXT")
     private String pdfUrl;
-    private String duree;      
+
+    private String duree;
     private String niveau;
-    
+
     @ManyToOne
     @JoinColumn(name = "formateur_id", nullable = false)
     private Formateur formateur;

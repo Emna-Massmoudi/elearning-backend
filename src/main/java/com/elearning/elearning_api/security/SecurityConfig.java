@@ -36,38 +36,22 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-                // ✅ OPTIONS (CORS)
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ✅ AUTH PUBLIC
-                .requestMatchers("/api/auth/**").permitAll()
+            	    // 🔥 PUBLIC TOTAL
+            	    .requestMatchers("/api/auth/**").permitAll()
+            	    .requestMatchers("/api/categories/**").permitAll()
+            	    .requestMatchers("/api/cours/**").permitAll()
 
-                // 🔓 PUBLIC (lecture seulement)
-                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
+            	    // 🔐 ADMIN
+            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 🔐 ADMIN (modification catégories)
-                .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+            	    // 🔐 autres
+            	    .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
 
-                // 🔐 AUTRES ROLES
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
-
-                .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
-                .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
-                .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
-
-                .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
-                .requestMatchers("/api/formateurs/*").authenticated()
-
-                // 📂 fichiers
-                .requestMatchers("/uploads/**").permitAll()
-
-                // 🔒 le reste
-                .anyRequest().authenticated()
-            )
+            	    // 🔒 le reste
+            	    .anyRequest().authenticated()
+            	)
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

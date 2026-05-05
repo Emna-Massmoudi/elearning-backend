@@ -38,13 +38,11 @@ public class CategorieController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<CategorieResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(categorieService.getById(id));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<CategorieResponse>> getAll() {
         return ResponseEntity.ok(categorieService.getAll());
     }

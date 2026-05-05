@@ -15,7 +15,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
-
 import java.util.List;
 
 @Configuration
@@ -33,42 +32,24 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
             .authorizeHttpRequests(auth -> auth
-
-                // ✅ OPTIONS (CORS)
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // ✅ AUTH PUBLIC
                 .requestMatchers("/api/auth/**").permitAll()
-
-                // 🔓 PUBLIC (lecture seulement)
                 .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
-
-                // 🔐 ADMIN (modification catégories)
                 .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
-
-                // 🔐 AUTRES ROLES
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
-
                 .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
                 .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
                 .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
-
                 .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
                 .requestMatchers("/api/formateurs/*").authenticated()
-
-                // 📂 fichiers
                 .requestMatchers("/uploads/**").permitAll()
-
-                // 🔒 le reste
                 .anyRequest().authenticated()
             )
-
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -77,23 +58,21 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
         configuration.setAllowedOriginPatterns(List.of(
             "http://localhost:4200",
             "https://*.web.app",
             "https://*.firebaseapp.com"
         ));
         configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(true);  // true car origines spécifiques
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 

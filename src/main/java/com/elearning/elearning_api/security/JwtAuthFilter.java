@@ -11,12 +11,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
-
 import java.io.IOException;
-import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -24,27 +22,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
 
-    // Centralisé ici pour cohérence avec SecurityConfig
-    private static final List<String> PUBLIC_PATHS = List.of(
-        "/api/auth/",
-        "/swagger-ui/",
-        "/v3/api-docs",
-        "/swagger-resources/",
-        "/webjars/",
-        "/uploads/",
-        "/ping"
-    );
-
-    private static final List<String> PUBLIC_GET_PATHS = List.of(
-        "/api/categories",
-        "/api/cours"
-    );
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // ✅ getRequestURI() est plus fiable que getServletPath()
         String path = request.getRequestURI();
         String method = request.getMethod();
+
+        System.out.println("=== FILTER CHECK === " + method + " " + path);
 
         if (method.equalsIgnoreCase("OPTIONS")) return true;
         if (path.startsWith("/api/auth/")) return true;
@@ -79,20 +62,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (jwtUtil.isTokenValid(token)) {
                 String email = jwtUtil.extractEmail(token);
-
                 if (email != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
-
                     UserDetails userDetails =
                         userDetailsService.loadUserByUsername(email);
-
                     UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
-
                     authToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request));
-
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
@@ -103,7 +81,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token invalide");
             return;
         }
-        // Les autres exceptions (DB down, etc.) → on laisse passer sans auth
 
         filterChain.doFilter(request, response);
     }

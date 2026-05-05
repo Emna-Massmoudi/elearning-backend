@@ -12,8 +12,11 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 
+import java.io.IOException;
+import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
@@ -21,22 +24,40 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
 
+    // Centralisé ici pour cohérence avec SecurityConfig
+    private static final List<String> PUBLIC_PATHS = List.of(
+        "/api/auth/",
+        "/swagger-ui/",
+        "/v3/api-docs",
+        "/swagger-resources/",
+        "/webjars/",
+        "/uploads/",
+        "/ping"
+    );
+
+    private static final List<String> PUBLIC_GET_PATHS = List.of(
+        "/api/categories",
+        "/api/cours"
+    );
+
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         String method = request.getMethod();
 
-        return method.equalsIgnoreCase("OPTIONS")
-                || path.startsWith("/api/auth/")
-                || path.startsWith("/swagger-ui/")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-resources/")
-                || path.startsWith("/webjars/")
-        		|| path.equals("/swagger-ui.html")
-        		|| path.startsWith("/api/categories")
-        		|| (method.equalsIgnoreCase("GET") && path.startsWith("/api/cours"))
-        		|| (method.equalsIgnoreCase("GET") && path.startsWith("/api/categories"))
-        		|| path.equals("/ping");
+        // OPTIONS toujours skippé
+        if (method.equalsIgnoreCase("OPTIONS")) return true;
+
+        // Chemins publics toutes méthodes
+        if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) return true;
+        if (path.equals("/swagger-ui.html")) return true;
+
+        // Chemins publics GET uniquement (cohérent avec SecurityConfig)
+        if (method.equalsIgnoreCase("GET")) {
+            return PUBLIC_GET_PATHS.stream().anyMatch(path::startsWith);
+        }
+
+        return false;
     }
 
     @Override
@@ -54,27 +75,42 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
-        if (jwtUtil.isTokenValid(token)) {
-            String email = jwtUtil.extractEmail(token);
+        try {
+            if (jwtUtil.isTokenValid(token)) {
+                String email = jwtUtil.extractEmail(token);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (email != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                try {
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                    UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(email);
 
                     UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails, null, userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
 
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                } catch (Exception e) {
-                    // ignore erreur DB au démarrage
                 }
             }
+        } catch (ExpiredJwtException e) {
+            sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token expiré");
+            return;
+        } catch (JwtException e) {
+            sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token invalide");
+            return;
         }
+        // Les autres exceptions (DB down, etc.) → on laisse passer sans auth
 
         filterChain.doFilter(request, response);
+    }
+
+    private void sendJsonError(HttpServletResponse response, int status, String message)
+            throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }

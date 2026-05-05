@@ -36,22 +36,38 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
 
-            	    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // ✅ OPTIONS (CORS)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-            	    // 🔥 PUBLIC TOTAL
-            	    .requestMatchers("/api/auth/**").permitAll()
-            	    .requestMatchers("/api/categories/**").permitAll()
-            	    .requestMatchers("/api/cours/**").permitAll()
+                // ✅ AUTH PUBLIC
+                .requestMatchers("/api/auth/**").permitAll()
 
-            	    // 🔐 ADMIN
-            	    .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                // 🔓 PUBLIC (lecture seulement)
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
 
-            	    // 🔐 autres
-            	    .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
+                // 🔐 ADMIN (modification catégories)
+                .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
-            	    // 🔒 le reste
-            	    .anyRequest().authenticated()
-            	)
+                // 🔐 AUTRES ROLES
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
+
+                .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
+                .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
+                .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
+
+                .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
+                .requestMatchers("/api/formateurs/*").authenticated()
+
+                // 📂 fichiers
+                .requestMatchers("/uploads/**").permitAll()
+
+                // 🔒 le reste
+                .anyRequest().authenticated()
+            )
 
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -62,13 +78,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:4200",
+            "https://*.web.app",
+            "https://*.firebaseapp.com"
+        ));
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(false);
+        configuration.setAllowCredentials(true);  // true car origines spécifiques
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

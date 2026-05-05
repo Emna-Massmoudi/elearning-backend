@@ -72,19 +72,19 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:4200",
-                "http://localhost:4203",
-                "https://*.onrender.com",
-                "https://*.web.app",          
-                "https://*.firebaseapp.com" 
-        ));
+        // 🔥 autorise TOUT (important pour corriger ton problème login)
+        configuration.setAllowedOriginPatterns(List.of("*"));
+
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
+
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
+
+        // 🔥 IMPORTANT
         configuration.setAllowCredentials(false);
+
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -92,7 +92,7 @@ public class SecurityConfig {
 
         return source;
     }
-
+       
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

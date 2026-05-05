@@ -1,6 +1,6 @@
 package com.elearning.elearning_api.entity;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,6 +20,7 @@ public class Choix {
 
     private Boolean estCorrect = false;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "question_id", nullable = false)
     private Question question;

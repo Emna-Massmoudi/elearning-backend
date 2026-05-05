@@ -7,4 +7,6 @@ COPY . .
 RUN chmod +x mvnw
 RUN ./mvnw clean package -DskipTests
 
-CMD ["java", "-jar", "target/elearning-api-0.0.3-SNAPSHOT.jar"]
+EXPOSE 8080
+
+CMD ["sh", "-c", "java -jar target/*.jar"]

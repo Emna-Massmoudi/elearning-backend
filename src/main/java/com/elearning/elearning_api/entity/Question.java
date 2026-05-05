@@ -1,6 +1,6 @@
 package com.elearning.elearning_api.entity;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -21,6 +21,7 @@ public class Question {
 
     private Integer point;
 
+    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "evaluation_id", nullable = false)
     private Evaluation evaluation;

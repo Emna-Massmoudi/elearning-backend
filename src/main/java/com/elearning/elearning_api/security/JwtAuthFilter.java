@@ -1,5 +1,7 @@
 package com.elearning.elearning_api.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,8 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
+
 import java.io.IOException;
 
 @Component
@@ -24,24 +25,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
+        String path = request.getServletPath();
         String method = request.getMethod();
 
-        System.out.println("=== FILTER CHECK === " + method + " " + path);
-
-        if (method.equalsIgnoreCase("OPTIONS")) return true;
-        if (path.startsWith("/api/auth/")) return true;
-        if (path.startsWith("/swagger-ui/")) return true;
-        if (path.startsWith("/v3/api-docs")) return true;
-        if (path.startsWith("/uploads/")) return true;
-        if (path.equals("/ping")) return true;
-
-        if (method.equalsIgnoreCase("GET")) {
-            return path.startsWith("/api/categories")
-                || path.startsWith("/api/cours");
-        }
-
-        return false;
+        return method.equalsIgnoreCase("OPTIONS")
+                || path.startsWith("/api/auth/")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-resources/")
+                || path.startsWith("/webjars/")
+                || path.equals("/swagger-ui.html")
+                || path.startsWith("/uploads/")
+                || path.equals("/ping")
+                || (method.equalsIgnoreCase("GET") && path.equals("/api/cours"))
+                || (method.equalsIgnoreCase("GET") && path.equals("/api/categories"))
+                || (method.equalsIgnoreCase("GET") && path.startsWith("/api/categories/"));
     }
 
     @Override
@@ -62,15 +60,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         try {
             if (jwtUtil.isTokenValid(token)) {
                 String email = jwtUtil.extractEmail(token);
-                if (email != null &&
-                    SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UserDetails userDetails =
-                        userDetailsService.loadUserByUsername(email);
+
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
                     UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
                     authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request));
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
@@ -79,6 +83,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             return;
         } catch (JwtException e) {
             sendJsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token invalide");
+            return;
+        } catch (Exception e) {
+            filterChain.doFilter(request, response);
             return;
         }
 

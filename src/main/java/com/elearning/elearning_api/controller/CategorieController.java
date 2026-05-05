@@ -18,20 +18,20 @@ public class CategorieController {
     private final CategorieService categorieService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ADMIN')")
     public ResponseEntity<CategorieResponse> create(@Valid @RequestBody CategorieRequest request) {
         return ResponseEntity.ok(categorieService.create(request));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ADMIN')")
     public ResponseEntity<CategorieResponse> update(@PathVariable Long id,
                                                     @Valid @RequestBody CategorieRequest request) {
         return ResponseEntity.ok(categorieService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasAuthority('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categorieService.delete(id);
         return ResponseEntity.noContent().build();

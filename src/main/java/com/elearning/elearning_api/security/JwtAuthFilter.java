@@ -42,19 +42,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
+        // ✅ getRequestURI() est plus fiable que getServletPath()
+        String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // OPTIONS toujours skippé
         if (method.equalsIgnoreCase("OPTIONS")) return true;
+        if (path.startsWith("/api/auth/")) return true;
+        if (path.startsWith("/swagger-ui/")) return true;
+        if (path.startsWith("/v3/api-docs")) return true;
+        if (path.startsWith("/uploads/")) return true;
+        if (path.equals("/ping")) return true;
 
-        // Chemins publics toutes méthodes
-        if (PUBLIC_PATHS.stream().anyMatch(path::startsWith)) return true;
-        if (path.equals("/swagger-ui.html")) return true;
-
-        // Chemins publics GET uniquement (cohérent avec SecurityConfig)
         if (method.equalsIgnoreCase("GET")) {
-            return PUBLIC_GET_PATHS.stream().anyMatch(path::startsWith);
+            return path.startsWith("/api/categories")
+                || path.startsWith("/api/cours");
         }
 
         return false;

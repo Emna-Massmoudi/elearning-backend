@@ -14,9 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.*;
 
 import java.util.List;
 
@@ -31,39 +29,47 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(
-                        	    "/api/auth/**",
-                        	    "/api/categories/**", 
-                        	    "/swagger-ui.html",
-                        	    "/v3/api-docs/**",
-                        	    "/swagger-resources/**",
-                        	    "/webjars/**",
-                        	    "/uploads/**",
-                        	    "/swagger-ui/**"
-                        	).permitAll()
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session ->
+                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
+            .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
-                        .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
-                        .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/cours").permitAll()        // ← AJOUTÉ
-                        .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()     // ← AJOUTÉ
-                        .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()   // ← AJOUTÉ
-                        .requestMatchers("/uploads/**").permitAll() 
-                        .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
-                        .requestMatchers("/api/formateurs/*").authenticated()
+                // ✅ OPTIONS (CORS)
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                // ✅ AUTH PUBLIC
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // 🔓 PUBLIC (lecture seulement)
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
+
+                // 🔐 ADMIN (modification catégories)
+                .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+
+                // 🔐 AUTRES ROLES
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
+
+                .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
+                .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
+                .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
+
+                .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
+                .requestMatchers("/api/formateurs/*").authenticated()
+
+                // 📂 fichiers
+                .requestMatchers("/uploads/**").permitAll()
+
+                // 🔒 le reste
+                .anyRequest().authenticated()
+            )
+
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -72,19 +78,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 🔥 autorise TOUT (important pour corriger ton problème login)
         configuration.setAllowedOriginPatterns(List.of("*"));
-
         configuration.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
-
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
-
-        // 🔥 IMPORTANT
         configuration.setAllowCredentials(false);
-
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -92,7 +92,7 @@ public class SecurityConfig {
 
         return source;
     }
-       
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -37,9 +37,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 || path.equals("/swagger-ui.html")
                 || path.startsWith("/uploads/")
                 || path.equals("/ping")
+
                 || (method.equalsIgnoreCase("GET") && path.equals("/api/cours"))
+                || (method.equalsIgnoreCase("GET") && path.startsWith("/api/cours/"))
+
                 || (method.equalsIgnoreCase("GET") && path.equals("/api/categories"))
-                || (method.equalsIgnoreCase("GET") && path.startsWith("/api/categories/"));
+                || (method.equalsIgnoreCase("GET") && path.startsWith("/api/categories/"))
+
+                || (method.equalsIgnoreCase("GET") && path.equals("/api/sous-categories"))
+                || (method.equalsIgnoreCase("GET") && path.startsWith("/api/sous-categories/"));
     }
 
     @Override

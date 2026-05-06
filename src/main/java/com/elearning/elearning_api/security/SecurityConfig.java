@@ -52,7 +52,7 @@ public class SecurityConfig {
 
                 // Uploads public
                 .requestMatchers("/uploads/**").permitAll()
-
+                .requestMatchers("/ping").permitAll()
                 // Routes publiques GET
                 .requestMatchers(HttpMethod.GET, "/api/cours").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()

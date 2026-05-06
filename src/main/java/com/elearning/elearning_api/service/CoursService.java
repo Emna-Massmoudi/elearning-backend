@@ -2,18 +2,25 @@ package com.elearning.elearning_api.service;
 
 import com.elearning.elearning_api.dto.request.CoursRequest;
 import com.elearning.elearning_api.dto.response.CoursResponse;
-import com.elearning.elearning_api.entity.*;
+import com.elearning.elearning_api.entity.Cours;
+import com.elearning.elearning_api.entity.Formateur;
+import com.elearning.elearning_api.entity.SousCategorie;
 import com.elearning.elearning_api.enums.EtatCours;
 import com.elearning.elearning_api.exception.BadRequestException;
 import com.elearning.elearning_api.exception.ResourceNotFoundException;
-import com.elearning.elearning_api.repository.*;
+import com.elearning.elearning_api.repository.CoursRepository;
+import com.elearning.elearning_api.repository.FormateurRepository;
+import com.elearning.elearning_api.repository.SousCategorieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CoursService {
 
     private final CoursRepository coursRepository;
@@ -26,6 +33,7 @@ public class CoursService {
 
         SousCategorie sousCategorie = sousCategorieRepository.findById(request.getSousCategorieId())
                 .orElseThrow(() -> new ResourceNotFoundException("SousCategorie not found"));
+
         validateSousCategorieBelongsToCategorie(sousCategorie, request.getCategorieId());
 
         Cours cours = new Cours();
@@ -38,7 +46,7 @@ public class CoursService {
         cours.setNiveau(request.getNiveau());
         cours.setImageUrl(request.getImageUrl());
         cours.setVideoUrl(request.getVideoUrl());
-        cours.setPdfUrl(request.getPdfUrl());   // ← AJOUTÉ
+        cours.setPdfUrl(request.getPdfUrl());
 
         return toResponse(coursRepository.save(cours));
     }
@@ -53,11 +61,12 @@ public class CoursService {
         existing.setNiveau(request.getNiveau());
         existing.setImageUrl(request.getImageUrl());
         existing.setVideoUrl(request.getVideoUrl());
-        existing.setPdfUrl(request.getPdfUrl());   // ← AJOUTÉ
+        existing.setPdfUrl(request.getPdfUrl());
 
         if (request.getSousCategorieId() != null) {
             SousCategorie sousCategorie = sousCategorieRepository.findById(request.getSousCategorieId())
                     .orElseThrow(() -> new ResourceNotFoundException("SousCategorie not found"));
+
             validateSousCategorieBelongsToCategorie(sousCategorie, request.getCategorieId());
             existing.setSousCategorie(sousCategorie);
         }
@@ -68,41 +77,58 @@ public class CoursService {
     public void delete(Long id) {
         Cours existing = coursRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cours not found: " + id));
+
         existing.setEtatPublication(EtatCours.SUPPRIME);
         coursRepository.save(existing);
     }
 
+    @Transactional(readOnly = true)
     public CoursResponse getById(Long id) {
         return coursRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Cours not found: " + id));
     }
 
+    @Transactional(readOnly = true)
     public List<CoursResponse> getAll() {
-        return coursRepository.findAll().stream().map(this::toResponse).toList();
+        return coursRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<CoursResponse> getByFormateur(Long formateurId) {
         return coursRepository.findByFormateurId(formateurId)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<CoursResponse> getByEtat(EtatCours etat) {
         return coursRepository.findByEtatPublication(etat)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public CoursResponse updateEtat(Long id, EtatCours etat) {
         Cours existing = coursRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cours not found: " + id));
+
         existing.setEtatPublication(etat);
-        if (etat == EtatCours.PUBLIE)
+
+        if (etat == EtatCours.PUBLIE) {
             existing.setDatePublication(LocalDateTime.now());
+        }
+
         return toResponse(coursRepository.save(existing));
     }
 
     private CoursResponse toResponse(Cours cours) {
         CoursResponse response = new CoursResponse();
+
         response.setId(cours.getId());
         response.setTitre(cours.getTitre());
         response.setDescription(cours.getDescription());
@@ -110,29 +136,27 @@ public class CoursService {
         response.setDateCreation(cours.getDateCreation());
         response.setDatePublication(cours.getDatePublication());
 
-        // Formateur
         if (cours.getFormateur() != null) {
             response.setFormateurId(cours.getFormateur().getId());
             response.setFormateurNom(cours.getFormateur().getNom());
             response.setFormateurEmail(cours.getFormateur().getEmail());
         }
 
-        // Sous-catégorie + Catégorie
         if (cours.getSousCategorie() != null) {
             response.setSousCategorieId(cours.getSousCategorie().getId());
             response.setSousCategorieNom(cours.getSousCategorie().getNom());
+
             if (cours.getSousCategorie().getCategorie() != null) {
                 response.setCategorieId(cours.getSousCategorie().getCategorie().getId());
                 response.setCategorieNom(cours.getSousCategorie().getCategorie().getNom());
             }
         }
 
-        // Champs optionnels
         response.setDuree(cours.getDuree());
         response.setNiveau(cours.getNiveau());
         response.setImageUrl(cours.getImageUrl());
         response.setVideoUrl(cours.getVideoUrl());
-        response.setPdfUrl(cours.getPdfUrl());   // ← AJOUTÉ
+        response.setPdfUrl(cours.getPdfUrl());
 
         return response;
     }

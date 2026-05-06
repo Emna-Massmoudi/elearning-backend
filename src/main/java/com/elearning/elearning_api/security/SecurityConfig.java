@@ -34,40 +34,59 @@ public class SecurityConfig {
             .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+
+                // OPTIONS pour CORS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                // Auth public
                 .requestMatchers("/api/auth/**").permitAll()
+
+                // Swagger public
+                .requestMatchers(
+                    "/swagger-ui.html",
+                    "/swagger-ui/**",
+                    "/v3/api-docs/**",
+                    "/swagger-resources/**",
+                    "/webjars/**"
+                ).permitAll()
+
+                // Uploads public
                 .requestMatchers("/uploads/**").permitAll()
 
-                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/sous-categories/**").permitAll()
+                // Routes publiques GET
+                .requestMatchers(HttpMethod.GET, "/api/cours").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
 
+                .requestMatchers(HttpMethod.GET, "/api/categories").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+
+                .requestMatchers(HttpMethod.GET, "/api/sous-categories").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/sous-categories/**").permitAll()
+
+                // Gestion catégories par ADMIN
                 .requestMatchers(HttpMethod.POST, "/api/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
 
+                // Gestion sous-catégories par ADMIN
                 .requestMatchers(HttpMethod.POST, "/api/sous-categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/sous-categories/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/sous-categories/**").hasRole("ADMIN")
 
+                // Admin
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // Étudiant
                 .requestMatchers("/api/etudiant/**").hasRole("ETUDIANT")
 
+                // Formateur
                 .requestMatchers("/api/formateurs/en-attente").hasRole("ADMIN")
                 .requestMatchers("/api/formateurs/*/accepter").hasRole("ADMIN")
                 .requestMatchers("/api/formateurs/*/refuser").hasRole("ADMIN")
                 .requestMatchers("/api/formateurs/*/candidature").hasRole("FORMATEUR")
                 .requestMatchers("/api/formateurs/*").authenticated()
 
-                .requestMatchers(
-                    "/swagger-ui.html",
-                    "/v3/api-docs/**",
-                    "/swagger-resources/**",
-                    "/webjars/**",
-                    "/swagger-ui/**"
-                ).permitAll()
-
+                // Le reste nécessite connexion
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

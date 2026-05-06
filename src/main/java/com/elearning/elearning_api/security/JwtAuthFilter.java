@@ -29,21 +29,32 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String method = request.getMethod();
 
         return method.equalsIgnoreCase("OPTIONS")
+
+                // Auth
                 || path.startsWith("/api/auth/")
+
+                // Swagger
                 || path.startsWith("/swagger-ui/")
                 || path.startsWith("/v3/api-docs")
                 || path.startsWith("/swagger-resources/")
                 || path.startsWith("/webjars/")
                 || path.equals("/swagger-ui.html")
+
+                // Uploads
                 || path.startsWith("/uploads/")
+
+                // Ping
                 || path.equals("/ping")
 
+                // Cours publics
                 || (method.equalsIgnoreCase("GET") && path.equals("/api/cours"))
                 || (method.equalsIgnoreCase("GET") && path.startsWith("/api/cours/"))
 
+                // Catégories publiques
                 || (method.equalsIgnoreCase("GET") && path.equals("/api/categories"))
                 || (method.equalsIgnoreCase("GET") && path.startsWith("/api/categories/"))
 
+                // Sous-catégories publiques
                 || (method.equalsIgnoreCase("GET") && path.equals("/api/sous-categories"))
                 || (method.equalsIgnoreCase("GET") && path.startsWith("/api/sous-categories/"));
     }

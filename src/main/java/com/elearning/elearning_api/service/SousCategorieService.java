@@ -9,10 +9,13 @@ import com.elearning.elearning_api.repository.CategorieRepository;
 import com.elearning.elearning_api.repository.SousCategorieRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SousCategorieService {
 
     private final SousCategorieRepository sousCategorieRepository;
@@ -47,33 +50,47 @@ public class SousCategorieService {
     }
 
     public void delete(Long id) {
-        if (!sousCategorieRepository.existsById(id))
+        if (!sousCategorieRepository.existsById(id)) {
             throw new ResourceNotFoundException("SousCategorie not found: " + id);
+        }
+
         sousCategorieRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public SousCategorieResponse getById(Long id) {
         return sousCategorieRepository.findById(id)
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("SousCategorie not found: " + id));
     }
 
+    @Transactional(readOnly = true)
     public List<SousCategorieResponse> getAll() {
         return sousCategorieRepository.findAll()
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<SousCategorieResponse> getByCategorie(Long categorieId) {
         return sousCategorieRepository.findByCategorieId(categorieId)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private SousCategorieResponse toResponse(SousCategorie sousCategorie) {
         SousCategorieResponse response = new SousCategorieResponse();
+
         response.setId(sousCategorie.getId());
         response.setNom(sousCategorie.getNom());
         response.setDescription(sousCategorie.getDescription());
-        response.setCategorieNom(sousCategorie.getCategorie().getNom());
+
+        if (sousCategorie.getCategorie() != null) {
+            response.setCategorieNom(sousCategorie.getCategorie().getNom());
+        }
+
         return response;
     }
 }
